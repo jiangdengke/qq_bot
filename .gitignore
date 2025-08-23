@@ -4,7 +4,10 @@ target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
-/resources/simbot-bots/myBot.bot.json
+/src/main/resources/simbot-bots/myBot.bot.json
+/src/main/resources/simbot-bots/
+# 或者只按后缀忽略
+**/*.bot.json
 ### STS ###
 .apt_generated
 .classpath
