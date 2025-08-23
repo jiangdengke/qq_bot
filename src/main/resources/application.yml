@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: qq_bot
+  config:
+    import: optional:file:.env[.properties]   # ?????? .env
+fy:
+  youDao:
+    url: ${FY_YOUDAO_URL:http://localhost:8000/}
