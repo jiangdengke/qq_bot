@@ -18,9 +18,7 @@ import org.springframework.stereotype.Repository;
 public class OvertimeLogRepository {
   private final DSLContext dsl;
 
-    /**
-     * 插入一条加班记录
-     */
+  /** 插入一条加班记录 */
   public void insert(long userId, LocalDate workDate, String type, BigDecimal hours, String note) {
     dsl.insertInto(OVERTIME_LOG)
         .set(OVERTIME_LOG.USER_ID, userId)
@@ -31,9 +29,7 @@ public class OvertimeLogRepository {
         .execute();
   }
 
-    /**
-     * 返回指定用户在指定日期范围内的加班总小时数（可能为 0）
-     */
+  /** 返回指定用户在指定日期范围内的加班总小时数（可能为 0） */
   public BigDecimal monthTotal(long userId, LocalDate start, LocalDate end) {
     return dsl.select(coalesce(sum(OVERTIME_LOG.HOURS), inline(BigDecimal.ZERO)))
         .from(OVERTIME_LOG)
@@ -41,9 +37,7 @@ public class OvertimeLogRepository {
         .fetchOne(0, BigDecimal.class);
   }
 
-    /**
-     * 返回指定用户在指定日期的加班总小时数（可能为 0）
-     */
+  /** 返回指定用户在指定日期的加班总小时数（可能为 0） */
   public BigDecimal dayTotal(long userId, LocalDate day) {
     return dsl.select(coalesce(sum(OVERTIME_LOG.HOURS), inline(BigDecimal.ZERO)))
         .from(OVERTIME_LOG)
@@ -51,9 +45,7 @@ public class OvertimeLogRepository {
         .fetchOne(0, BigDecimal.class);
   }
 
-    /**
-     * 返回指定用户在指定日期范围内的各类型加班小时数（可能为空 map）
-     */
+  /** 返回指定用户在指定日期范围内的各类型加班小时数（可能为空 map） */
   public Map<String, BigDecimal> monthTotalsByType(long userId, LocalDate start, LocalDate end) {
     var out = new LinkedHashMap<String, BigDecimal>();
     dsl.select(OVERTIME_LOG.OT_TYPE, sum(OVERTIME_LOG.HOURS))
@@ -65,9 +57,7 @@ public class OvertimeLogRepository {
     return out;
   }
 
-    /**
-     * 返回指定用户在指定日期的各类型加班小时数（可能为空 map）
-     */
+  /** 返回指定用户在指定日期的各类型加班小时数（可能为空 map） */
   public Map<String, BigDecimal> dayTotalsByType(long userId, LocalDate day) {
     var out = new LinkedHashMap<String, BigDecimal>();
     dsl.select(OVERTIME_LOG.OT_TYPE, sum(OVERTIME_LOG.HOURS))
@@ -79,9 +69,7 @@ public class OvertimeLogRepository {
     return out;
   }
 
-    /**
-     * 返回指定用户在指定日期范围内的每日加班总小时数（可能为空 map，按日期升序）
-     */
+  /** 返回指定用户在指定日期范围内的每日加班总小时数（可能为空 map，按日期升序） */
   public LinkedHashMap<LocalDate, BigDecimal> monthDailyTotals(
       long userId, LocalDate start, LocalDate end) {
     var out = new LinkedHashMap<LocalDate, BigDecimal>();
@@ -94,13 +82,11 @@ public class OvertimeLogRepository {
         .forEach(r -> out.put(r.get(OVERTIME_LOG.WORK_DATE), r.get(1, BigDecimal.class)));
     return out;
   }
-    /**
-     * 删除某用户某天的所有加班记录，返回删除行数
-     */
-    public int deleteByUserIdAndWorkDate(long userId, LocalDate workDate) {
-        return dsl.deleteFrom(OVERTIME_LOG)
-                .where(OVERTIME_LOG.USER_ID.eq(userId)
-                        .and(OVERTIME_LOG.WORK_DATE.eq(workDate)))
-                .execute();
-    }
+
+  /** 删除某用户某天的所有加班记录，返回删除行数 */
+  public int deleteByUserIdAndWorkDate(long userId, LocalDate workDate) {
+    return dsl.deleteFrom(OVERTIME_LOG)
+        .where(OVERTIME_LOG.USER_ID.eq(userId).and(OVERTIME_LOG.WORK_DATE.eq(workDate)))
+        .execute();
+  }
 }
