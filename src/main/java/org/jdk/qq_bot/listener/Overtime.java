@@ -1,6 +1,7 @@
 package org.jdk.qq_bot.listener;
 
 import java.math.BigDecimal;
+import java.nio.file.Path;
 import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.util.Locale;
@@ -9,12 +10,15 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import love.forte.simbot.component.onebot.v11.core.event.message.OneBotGroupMessageEvent;
+import love.forte.simbot.component.onebot.v11.message.segment.OneBotImage;
 import love.forte.simbot.quantcat.common.annotations.ContentTrim;
 import love.forte.simbot.quantcat.common.annotations.Filter;
 import love.forte.simbot.quantcat.common.annotations.Listener;
 import love.forte.simbot.quantcat.common.filter.MatchType;
+import love.forte.simbot.resource.Resources;
 import org.jdk.qq_bot.dto.OvertimeSummary;
 import org.jdk.qq_bot.service.OvertimeService;
+import org.jdk.qq_bot.service.echats.EchartsRenderClient;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -22,7 +26,7 @@ import org.springframework.stereotype.Component;
 public class Overtime {
 
   private final OvertimeService overtimeService;
-
+  private final EchartsRenderClient echarts;
   /** 帮助文本（Java 17 文本块） */
   private static final String HELP_TEXT =
       """
@@ -186,51 +190,55 @@ overtime query
   }
 
   // ---------- 5) query：overtime query ----------
-  @Listener
-  @ContentTrim
-  @Filter(value = "(?i)^overtime\\s+query$", matchType = MatchType.REGEX_MATCHES)
-  public void query(OneBotGroupMessageEvent event) {
-    long uid = Long.parseLong(event.getUserId().toString());
-    try {
-      OvertimeSummary s = overtimeService.queryThisMonth(uid);
-      String byType =
-          "G1="
-              + fmt(s.getMonthByType().get("G1"))
-              + "h, "
-              + "G2="
-              + fmt(s.getMonthByType().get("G2"))
-              + "h, "
-              + "G3="
-              + fmt(s.getMonthByType().get("G3"))
-              + "h";
-      StringBuilder daily = new StringBuilder();
-      if (s.getDailyTotals().isEmpty()) {
-        daily.append("（本月暂无记录）");
-      } else {
-        for (Map.Entry<LocalDate, BigDecimal> e : s.getDailyTotals().entrySet()) {
-          daily
-              .append(e.getKey().toString().substring(5)) // MM-dd
-              .append(" ")
-              .append(fmt(e.getValue()))
-              .append("h\n");
+    /** 群聊：overtime query -> 文本 + 两张图 */
+    @Listener
+    @ContentTrim
+    @Filter(value = "(?i)^overtime\\s+query$", matchType = MatchType.REGEX_MATCHES)
+    public void queryWithCharts(OneBotGroupMessageEvent event) {
+        long uid = Long.parseLong(event.getUserId().toString());
+
+        try {
+            // 1) 查询统计
+            OvertimeSummary s = overtimeService.queryThisMonth(uid);
+
+            String byType = "G1=" + fmt(s.getMonthByType().get("G1")) + "h, "
+                    + "G2=" + fmt(s.getMonthByType().get("G2")) + "h, "
+                    + "G3=" + fmt(s.getMonthByType().get("G3")) + "h";
+
+            StringBuilder daily = new StringBuilder();
+            if (s.getDailyTotals().isEmpty()) {
+                daily.append("（本月暂无记录）");
+            } else {
+                for (Map.Entry<LocalDate, BigDecimal> e : s.getDailyTotals().entrySet()) {
+                    daily.append(e.getKey().toString().substring(5)) // MM-dd
+                            .append(" ").append(fmt(e.getValue())).append("h\n");
+                }
+            }
+
+            String summary = "📊 本月合计：" + fmt(s.getMonthTotal()) + "h（" + byType + "）\n"
+                    + "🗓️ 今天：" + fmt(s.getTodayTotal()) + "h\n"
+                    + "—— 每日 ——\n" + daily;
+
+            // 2) 生成图表（ECharts 渲染服务）
+            Path barPng = echarts.renderMonthDailyBar(uid, s);  // 调用 EchartsOptionBuilder.dailyBarOption
+            Path piePng = echarts.renderMonthTypePie(uid, s);   // 调用 EchartsOptionBuilder.typePieOption
+
+            // 3) 先发文本，再发图（本地文件 -> base64）
+            event.replyAsync(summary);
+
+            OneBotImage.AdditionalParams params = new OneBotImage.AdditionalParams();
+            params.setLocalFileToBase64(true); // 关键：把本地图片转 base64 发送
+
+            var barImg = OneBotImage.create(Resources.valueOf(barPng.toFile()), params).toElement();
+            var pieImg = OneBotImage.create(Resources.valueOf(piePng.toFile()), params).toElement();
+
+            event.replyAsync(barImg);
+            event.replyAsync(pieImg);
+
+        } catch (Exception e) {
+            event.replyAsync("⚠️ 生成图表失败：" + e.getMessage());
         }
-      }
-      String msg =
-          "📊 本月合计："
-              + fmt(s.getMonthTotal())
-              + "h（"
-              + byType
-              + "）\n"
-              + "🗓️ 今天："
-              + fmt(s.getTodayTotal())
-              + "h\n"
-              + "—— 每日 ——\n"
-              + daily;
-      event.replyAsync(msg);
-    } catch (Exception e) {
-      event.replyAsync("❌ 失败：" + e.getMessage());
     }
-  }
 
   // ---------- 工具 ----------
   private static LocalDate parseYyMmDd(String yymmdd) {

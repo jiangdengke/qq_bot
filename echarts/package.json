@@ -6,6 +6,7 @@
   "dependencies": {
     "echarts": "^5.5.0",
     "express": "^4.19.2",
-    "puppeteer": "^22.15.0"
+    "puppeteer-core": "^24.9.0"
   }
 }
+

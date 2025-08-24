@@ -84,6 +84,11 @@
             <version>4.13.0</version>
         </dependency>
         <dependency>
+            <groupId>org.jetbrains.kotlinx</groupId>
+            <artifactId>kotlinx-io-core-jvm</artifactId>
+            <version>0.8.0</version>
+        </dependency>
+        <dependency>
             <groupId>love.forte.simbot.component</groupId>
             <artifactId>simbot-component-onebot-v11-core-jvm</artifactId>
             <version>1.8.2</version>

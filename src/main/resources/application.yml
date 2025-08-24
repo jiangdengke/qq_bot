@@ -21,3 +21,7 @@ logging:
 fy:
   youDao:
     url: ${FY_YOUDAO_URL}
+echarts:
+  render:
+    base-url: ${ECHATS_RENDER_BASE_URL}  # 渲染服务地址（Docker 映射后端口）
+    out-dir: ${ECHATS_RENDER_OUT_DIR}             # 图片输出目录
