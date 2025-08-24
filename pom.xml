@@ -136,25 +136,26 @@
                 <configuration>
                     <generator>
                         <database>
+                            <!-- 用 DDLDatabase 解析本地脚本 -->
                             <name>org.jooq.meta.extensions.ddl.DDLDatabase</name>
                             <properties>
+                                <!-- 你的建表脚本 -->
                                 <property>
                                     <key>scripts</key>
                                     <value>${project.basedir}/src/main/resources/sql/create.sql</value>
                                 </property>
+                                <!-- 关键：指定方言为 MySQL -->
                                 <property><key>dialect</key><value>MYSQL</value></property>
+                                <!-- 关键：脚本编码，避免中文乱码 -->
+                                <property><key>scriptsEncoding</key><value>UTF-8</value></property>
+                                <!-- 建议：小写名、无默认 schema -->
+                                <property><key>defaultNameCase</key><value>lower</value></property>
+                                <property><key>unqualifiedSchema</key><value>none</value></property>
+                                <!-- 可选：生成期日志 -->
                                 <property><key>logExecutedQueries</key><value>true</value></property>
                                 <property><key>logExecutionResults</key><value>true</value></property>
-                                <property>
-                                    <key>defaultNameCase</key>
-                                    <value>lower</value>
-                                </property>
-                                <property>
-                                    <key>unqualifiedSchema</key>
-                                    <value>none</value>
-                                </property>
-
                             </properties>
+
                             <includes>.*</includes>
                         </database>
                         <target>
@@ -177,6 +178,50 @@
                     </dependency>
                 </dependencies>
 
+            </plugin>
+
+
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <version>2.43.0</version>
+                <configuration>
+                    <lineEndings>GIT_ATTRIBUTES</lineEndings>
+                    <encoding>UTF-8</encoding>
+
+                    <java>
+                        <excludes>
+                            <exclude>target/**</exclude>
+                            <exclude>**/generated/**</exclude>
+                            <exclude>target/generated-sources/**</exclude> <!-- jOOQ 生成目录 -->
+                        </excludes>
+
+                        <removeUnusedImports/>
+
+                        <!-- ✅ 正确写法：用 <order> 子元素 -->
+                        <importOrder>
+                            <order>java,javax,org,com</order>
+                            <!-- 可选：分组之间空行 -->
+                            <!-- <separateLineBetweenGroups>true</separateLineBetweenGroups> -->
+                        </importOrder>
+
+                        <googleJavaFormat>
+                            <version>1.17.0</version>
+                        </googleJavaFormat>
+
+                        <trimTrailingWhitespace/>
+                        <endWithNewline/>
+                    </java>
+
+                </configuration>
+
+                <executions>
+                    <execution>
+                        <id>spotless-check</id>
+                        <phase>verify</phase>
+                        <goals><goal>check</goal></goals>
+                    </execution>
+                </executions>
             </plugin>
 
         </plugins>
