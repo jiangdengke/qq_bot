@@ -3,6 +3,21 @@ spring:
     name: qq_bot
   config:
     import: optional:file:.env[.properties]   # ?????? .env
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai&rewriteBatchedStatements=true
+    username: ${DB_USER}
+    password: ${DB_PASSWORD:}
+
+  jooq:
+    sql-dialect: MYSQL
+logging:
+  level:
+    # 先关掉 jOOQ 自带的 LoggerListener（如果你之前加过的话）
+    org.jooq.tools.LoggerListener: OFF
+    # 打开我们自定义的精简日志
+    jooq.sql: INFO
+
 fy:
   youDao:
-    url: ${FY_YOUDAO_URL:http://localhost:8000/}
+    url: ${FY_YOUDAO_URL}

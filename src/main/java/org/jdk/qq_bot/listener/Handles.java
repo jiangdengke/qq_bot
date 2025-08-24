@@ -7,22 +7,27 @@ import cn.hutool.http.HttpResponse;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import love.forte.simbot.component.onebot.v11.core.event.message.OneBotGroupMessageEvent;
 import love.forte.simbot.quantcat.common.annotations.ContentTrim;
 import love.forte.simbot.quantcat.common.annotations.Filter;
 import love.forte.simbot.quantcat.common.annotations.FilterValue;
 import love.forte.simbot.quantcat.common.annotations.Listener;
 import love.forte.simbot.quantcat.common.filter.MatchType;
+import org.jdk.qq_bot.dto.CodesResponse;
+import org.jdk.qq_bot.service.CityCodeService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
+@Slf4j
 @Component
-public class FyListener {
-
+@RequiredArgsConstructor
+public class Handles {
+    private final CityCodeService cityCodeService;
     @Value("${fy.youDao.url}")
     private String youDaoUrl;
     /**
-     * 监听群聊消息事件
+     * 处理翻译
      */
     @Listener
     @ContentTrim
@@ -65,10 +70,27 @@ public class FyListener {
                 }
             }
 
+            log.info("翻译结果: "+text);
             event.replyAsync(StrUtil.blankToDefault(text, "没查到释义~"));
 
         } catch (Exception e) {
             event.replyAsync("查询异常：" + e.getMessage());
+        }
+    }
+
+
+    @Listener
+    @ContentTrim
+    @Filter(value = "query{{name}}", matchType = MatchType.REGEX_MATCHES)
+    public void codes(
+            OneBotGroupMessageEvent event,
+            @FilterValue("name")String name) {
+        log.info("cityCode and adCode 查询: "+name);
+        CodesResponse codesByName = cityCodeService.getCodesByName(name);
+        if (codesByName != null) {
+            event.replyAsync("查询结果: \n"+"adCode: "+codesByName.adCode()+"\n"+"cityCode: "+codesByName.cityCode());
+        } else {
+            event.replyAsync("未找到相关信息");
         }
     }
 }
