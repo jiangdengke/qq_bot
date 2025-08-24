@@ -71,4 +71,31 @@ public class OvertimeService {
 
     return new OvertimeSummary(monthTotal, todayTotal, monthByType, todayByType, dailyTotals);
   }
+    /**
+     * 删除某天的所有加班记录，返回删除的记录数
+     */
+    public int deleteOvertimeByDate(long userId, LocalDate date) {
+        if (date == null) throw  new IllegalArgumentException("date is null");
+        return repo.deleteByUserIdAndWorkDate(userId, date);
+    }
+    /**
+     * 将某天的加班设为hours(覆盖原有记录),不传type则默认为G1
+     */
+    public void setOvertimeByDate(long userId, LocalDate date, BigDecimal hours, String type, String note) {
+        if (date == null) throw  new IllegalArgumentException("date is null");
+        if (hours == null || hours.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("hours must be > 0");
+        }
+        String t = (type == null || type.isBlank()) ? "G1" : type.toUpperCase(Locale.ROOT);
+        if (!VALID_TYPES.contains(t)) {
+            throw new IllegalArgumentException("type must be one of G1/G2/G3");
+        }
+        if (note != null && note.length() > 255) {
+            note = note.substring(0, 255);
+        }
+        //删除原有记录
+        repo.deleteByUserIdAndWorkDate(userId, date);
+        //插入新记录
+        repo.insert(userId, date, t, hours, note);
+    }
 }
