@@ -199,6 +199,7 @@
                             <exclude>target/**</exclude>
                             <exclude>**/generated/**</exclude>
                             <exclude>target/generated-sources/**</exclude> <!-- jOOQ 生成目录 -->
+
                         </excludes>
 
                         <removeUnusedImports/>
@@ -229,6 +230,24 @@
                 </executions>
             </plugin>
 
+            <!-- 把生成目录加入编译源路径 -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>add-jooq-sources</id>
+                        <phase>generate-sources</phase>
+                        <goals><goal>add-source</goal></goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.build.directory}/generated-sources/jooq</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 </project>
